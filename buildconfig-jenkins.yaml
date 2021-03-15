@@ -1,0 +1,13 @@
+kind: "BuildConfig"
+apiVersion: "v1"
+metadata:
+  name: "jenkins"
+spec:
+  source:
+    git:
+      uri: "https://github.com/MuhammadYasser2019/jenkins"
+  strategy:
+    jenkinsPipelineStrategy:
+      jenkinsfilePath: jenkinsfile
+
+## dumb comment
