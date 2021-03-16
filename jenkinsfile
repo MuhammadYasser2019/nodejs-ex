@@ -1,5 +1,5 @@
 def templatePath = 'https://raw.githack.com/MuhammadYasser2019/nodejs-ex/master/template-nodejs.json' 
-def templateName = 'nodejs-mongodb-c9'
+def templateName = 'nodejs-mongodb-example'
 pipeline {
   agent {
     node {
@@ -35,17 +35,17 @@ pipeline {
         }
       }
     }
-    // stage('create') {
-    //   steps {
-    //     script {
-    //         openshift.withCluster() {
-    //             openshift.withProject() {
-    //               openshift.newApp(templatePath) 
-    //             }
-    //         }
-    //     }
-    //   }
-    // }
+    stage('create') {
+      steps {
+        script {
+            openshift.withCluster() {
+                openshift.withProject() {
+                  openshift.newApp(templatePath) 
+                }
+            }
+        }
+      }
+    }
 //     stage('build') {
 //       steps {
 //         script {
