@@ -1,5 +1,5 @@
 def templatePath = 'https://raw.githack.com/MuhammadYasser2019/nodejs-ex/master/template-nodejs.json' 
-def templateName = 'nodejs-mongodb-c9'
+def templateName = 'nodejs-mongodb-example'
 pipeline {
   agent {
     node {
@@ -21,73 +21,73 @@ pipeline {
             }
         }
     }
-    stage('cleanup') {
+    // stage('cleanup') {
+    //   steps {
+    //     script {
+    //         openshift.withCluster() {
+    //             openshift.withProject() {
+    //               openshift.selector("all", [ template : templateName ]).delete() 
+    //               if (openshift.selector("secrets", templateName).exists()) { 
+    //                 openshift.selector("secrets", templateName).delete()
+    //               }
+    //             }
+    //         }
+    //     }
+    //   }
+    // }
+    // stage('create') {
+    //   steps {
+    //     script {
+    //         openshift.withCluster() {
+    //             openshift.withProject() {
+    //               openshift.newApp(templatePath) 
+    //             }
+    //         }
+    //     }
+    //   }
+    // }
+    stage('build') {
       steps {
         script {
             openshift.withCluster() {
                 openshift.withProject() {
-                  openshift.selector("all", [ template : templateName ]).delete() 
-                  if (openshift.selector("secrets", templateName).exists()) { 
-                    openshift.selector("secrets", templateName).delete()
+                  def builds = openshift.selector("bc", templateName).related('builds')
+                  timeout(5) { 
+                    builds.untilEach(1) {
+                      return (it.object().status.phase == "Complete")
+                    }
                   }
                 }
             }
         }
       }
     }
-    stage('create') {
+    stage('deploy') {
       steps {
         script {
             openshift.withCluster() {
                 openshift.withProject() {
-                  openshift.newApp(templatePath) 
+                  def rm = openshift.selector("dc", templateName).rollout()
+                  timeout(5) { 
+                    openshift.selector("dc", templateName).related('pods').untilEach(1) {
+                      return (it.object().status.phase == "Running")
+                    }
+                  }
                 }
             }
         }
       }
     }
-//     stage('build') {
-//       steps {
-//         script {
-//             openshift.withCluster() {
-//                 openshift.withProject() {
-//                   def builds = openshift.selector("bc", templateName).related('builds')
-//                   timeout(5) { 
-//                     builds.untilEach(1) {
-//                       return (it.object().status.phase == "Complete")
-//                     }
-//                   }
-//                 }
-//             }
-//         }
-//       }
-//     }
-//     stage('deploy') {
-//       steps {
-//         script {
-//             openshift.withCluster() {
-//                 openshift.withProject() {
-//                   def rm = openshift.selector("dc", templateName).rollout()
-//                   timeout(5) { 
-//                     openshift.selector("dc", templateName).related('pods').untilEach(1) {
-//                       return (it.object().status.phase == "Running")
-//                     }
-//                   }
-//                 }
-//             }
-//         }
-//       }
-//     }
-//     stage('tag') {
-//       steps {
-//         script {
-//             openshift.withCluster() {
-//                 openshift.withProject() {
-//                   openshift.tag("${templateName}:latest", "${templateName}-staging:latest") 
-//                 }
-//             }
-//         }
-//       }
-//     }
+    stage('tag') {
+      steps {
+        script {
+            openshift.withCluster() {
+                openshift.withProject() {
+                  openshift.tag("${templateName}:latest", "${templateName}-staging:latest") 
+                }
+            }
+        }
+      }
+    }
   }
 }
