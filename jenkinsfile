@@ -1,5 +1,5 @@
 def templatePath = 'https://raw.githack.com/MuhammadYasser2019/nodejs-ex/master/template-nodejs.json' 
-def templateName = 'nodejs-mongodb-example' 
+def templateName = 'nodejs-mongodb-example2'
 pipeline {
   agent {
     node {
