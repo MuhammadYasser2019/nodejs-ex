@@ -35,17 +35,17 @@ pipeline {
         }
       }
     }
-    stage('create') {
-      steps {
-        script {
-            openshift.withCluster() {
-                openshift.withProject() {
-                  openshift.newApp(templatePath) 
-                }
-            }
-        }
-      }
-    }
+    // stage('create') {
+    //   steps {
+    //     script {
+    //         openshift.withCluster() {
+    //             openshift.withProject() {
+    //               openshift.newApp(templatePath) 
+    //             }
+    //         }
+    //     }
+    //   }
+    // }
 //     stage('build') {
 //       steps {
 //         script {
