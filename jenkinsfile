@@ -51,7 +51,7 @@ pipeline {
         script {
             openshift.withCluster() {
                 openshift.withProject() {
-                  openshift.selector("bc", "templateName").startBuild()
+                  openshift.selector("bc", "${templateName}").startBuild()
                 }
             }
         }
@@ -62,7 +62,7 @@ pipeline {
         script {
             openshift.withCluster() {
                 openshift.withProject() {
-                  openshift.selector("dc", "templateName").rollout().latest()
+                  openshift.selector("dc", "${templateName}").rollout().latest()
                 }
             }
         }
