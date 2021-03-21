@@ -46,6 +46,28 @@ pipeline {
     //     }
     //   }
     // }
+    stage('create') {
+      steps {
+        script {
+            openshift.withCluster() {
+                openshift.withProject() {
+                  openshift.selector("bc", "templateName").startBuild()
+                }
+            }
+        }
+      }
+    }
+    stage('rollout') {
+      steps {
+        script {
+            openshift.withCluster() {
+                openshift.withProject() {
+                  openshift.selector("dc", "templateName").rollout().latest()
+                }
+            }
+        }
+      }
+    }
     stage('build') {
       steps {
         script {
