@@ -1,0 +1,353 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata: 
+  name: time-stack-template
+  annotations:
+    iconClass: icon-rails
+    description: |-
+      A Time Tracking Solution For Your Business, Independent of an employee's location, stay organized and capture every billing hour with our cloud based application. Deploy in minutes and accelerate your efficiency by light years.
+    openshift.io/display-name: Time Stack
+    openshift.io/documentation-url: https://github.com/Resource-Stack/time_stack.git
+    openshift.io/provider-display-name: Cloud Niners, LLC.
+
+
+objects:
+
+--- ImageStream
+
+- kind: ImageStream
+  apiVersion: image.openshift.io/v1
+  metadata:
+    name: drupal
+
+--- BuildConfig
+
+- kind: BuildConfig
+  apiVersion: build.openshift.io/v1
+  metadata:
+    name: time-stack-builder
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: 'drupal:latest'
+    strategy:
+      type: Docker
+      dockerStrategy:
+        dockerfilePath: Dockerfile
+    source:
+      type: Git
+      git:
+        uri: 'https://github.com/MuhammadYasser2019/drupal-1.git'
+        ref: 9.2.x
+    triggers:
+      - type: ConfigChange
+
+--- Persistent Volume Claim
+
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: drupal-pvc
+    labels:
+      app: drupal
+  spec:
+    storageClassName: ovirt-csi-sc
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: 2Gi
+      
+--- DeploymentConfig
+- kind: DeploymentConfig
+  apiVersion: apps.openshift.io/v1
+  metadata:
+    labels:
+      app: drupal
+      name: drupal
+    name: drupal
+  spec:
+    strategy:
+      type: Rolling
+    triggers:
+      - type: ImageChange
+        imageChangeParams:
+          automatic: true
+          containerNames:
+            - drupal
+          from:
+            kind: ImageStreamTag
+            name: 'drupal:latest' 
+    replicas: 1
+    template:
+      metadata:
+        labels:
+          app: drupal
+          deploymentconfig: drupal
+      spec:
+        restartPolicy: Always
+        initContainers:
+          -
+            name: init-sites-volume
+            command:
+              - /bin/bash
+              - '-c'
+            args:
+              - cp -r /opt/app-root/src/sites/ /opt/app-root/data/ ;
+            volumeMounts:
+              - name: vol-drupal
+                mountPath: /opt/app-root/data
+            image: >-
+              image-registry.openshift-image-registry.svc:5000/drupal-prod/drupal:latest
+        containers:
+          - name: drupal
+            image: >-
+              drupal:latest
+            ports:
+              - containerPort: 80
+                protocol: TCP
+            volumeMounts:
+              - name: vol-drupal
+                mountPath: /opt/app-root/src/modules
+                subPath: modules
+              - name: vol-drupal
+                mountPath: /opt/app-root/src/profiles
+                subPath: profiles
+              - name: vol-drupal
+                mountPath: /opt/app-root/src/sites
+                subPath: sites
+              - name: vol-drupal
+                mountPath: /opt/app-root/src/themes
+                subPath: themes
+        volumes:
+          - name: vol-drupal
+            persistentVolumeClaim:
+              claimName: drupal-pvc
+
+--- Service 
+
+- kind: Service
+  apiVersion: v1
+  metadata:
+    name: drupal-8-svc
+    labels:
+      app: drupal
+  spec:
+    ports:
+      - name: http
+        protocol: TCP
+        port: 80
+        targetPort: 8080
+    
+    selector:
+      app: drupal
+      deploymentconfig: drupal
+
+--- Route
+
+- kind: Route
+  apiVersion: route.openshift.io/v1
+  metadata:
+    name: drupal-route
+    labels:
+      app: drupal
+  spec:
+    host: drupal-route-drupal-prod.apps.demo.3kdev.us
+    to:
+      kind: Service
+      name: drupal-8-svc
+      weight: 100
+    port:
+      targetPort: http
+    wildcardPolicy: None
+
+
+
+
+- kind: Secret
+  apiVersion: v1
+  metadata:
+    name: mysql
+    labels:
+  stringData:
+    database-name: ${MYSQL_DATABASE}
+    database-password: ${MYSQL_PASSWORD}
+    database-root-password: ${MYSQL_ROOT_PASSWORD}
+    database-user: ${MYSQL_USER}
+
+- kind: DeploymentConfig
+  apiVersion: apps.openshift.io/v1
+  metadata:
+    name: mysql
+    labels:
+      template: mysql-persistent-template
+      template.openshift.io/template-instance-owner: e4f9934f-60f7-4861-b0ab-1e5a82aad468
+  spec:
+    strategy:
+      type: Recreate
+      recreateParams:
+        timeoutSeconds: 600
+      resources: {}
+      activeDeadlineSeconds: 21600
+    triggers:
+      - type: ImageChange
+        imageChangeParams:
+          automatic: true
+          containerNames:
+            - mysql
+          from:
+            kind: ImageStreamTag
+            namespace: openshift
+            name: 'mysql:8.0-el8'
+      - type: ConfigChange
+    replicas: 1
+    revisionHistoryLimit: 10
+    test: false
+    selector:
+      name: mysql
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: mysql
+      spec:
+        volumes:
+          - name: mysql-data
+            persistentVolumeClaim:
+              claimName: mysql
+        containers:
+          - resources:
+              limits:
+                memory: ${MEMORY_LIMIT}  
+            readinessProbe:
+              exec:
+                command:
+                  - /bin/sh
+                  - '-i'
+                  - '-c'
+                  - MYSQL_PWD="$MYSQL_PASSWORD" mysqladmin -u $MYSQL_USER ping
+              initialDelaySeconds: 5
+              timeoutSeconds: 1
+              periodSeconds: 10
+              successThreshold: 1
+              failureThreshold: 3
+            terminationMessagePath: /dev/termination-log
+            name: mysql
+            livenessProbe:
+              exec:
+                command:
+                  - /bin/sh
+                  - '-i'
+                  - '-c'
+                  - MYSQL_PWD="$MYSQL_PASSWORD" mysqladmin -u $MYSQL_USER ping
+              initialDelaySeconds: 30
+              timeoutSeconds: 1
+              periodSeconds: 10
+              successThreshold: 1
+              failureThreshold: 3
+            env:
+              - name: MYSQL_USER
+                valueFrom:
+                  secretKeyRef:
+                    name: mysql
+                    key: database-user
+              - name: MYSQL_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: mysql
+                    key: database-password
+              - name: MYSQL_ROOT_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: mysql
+                    key: database-root-password
+              - name: MYSQL_DATABASE
+                valueFrom:
+                  secretKeyRef:
+                    name: mysql
+                    key: database-name
+            ports:
+              - containerPort: 3306
+                protocol: TCP
+            imagePullPolicy: IfNotPresent
+            volumeMounts:
+              - name: mysql-data
+                mountPath: /var/lib/mysql/data
+            terminationMessagePolicy: File
+            image: >-
+              image-registry.openshift-image-registry.svc:5000/openshift/mysql@sha256:0c1b7d1621fac94dc35e3639e4c5207ad291c7029830d8c8eeb131c4bba4755d
+        restartPolicy: Always
+        terminationGracePeriodSeconds: 30
+        dnsPolicy: ClusterFirst
+        securityContext: {}
+        schedulerName: default-scheduler
+
+- kind: Service
+  apiVersion: v1
+  metadata:
+    name: mysql
+  spec:
+    ports:
+      - name: mysql
+        protocol: TCP
+        port: 3306
+        targetPort: 3306
+    selector:
+      name: mysql
+    type: ClusterIP
+    sessionAffinity: None
+
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: mysql
+    labels:
+      app: mysql
+  spec:
+    storageClassName: ovirt-csi-sc
+    accessModes:
+    - ReadWriteOnce 
+    resources:
+      requests:
+        storage: 1Gi
+
+
+parameters:
+
+  #### Database Parameters ####
+- description: Maximum amount of memory the container can use.
+  displayName: Memory Limit
+  name: MEMORY_LIMIT
+  required: true
+  value: 512Mi
+
+- description: Username for MySQL user that will be used for accessing the database.
+  displayName: MySQL Connection Username
+  from: user[A-Z0-9]{3}
+  generate: expression
+  name: MYSQL_USER
+  required: true
+  value: yasser
+
+- description: Password for the MYSQL connection user.
+  displayName: MYSQL Connection Password
+  from: '[a-zA-Z0-9]{16}'
+  generate: expression
+  name: MYSQL_PASSWORD
+  required: true
+  value: rsi1111
+
+- description: Password for the MYSQL root user.
+  displayName: MYSQL root Password
+  from: '[a-zA-Z0-9]{16}'
+  generate: expression
+  name: MYSQL_ROOT_PASSWORD
+  required: true
+  value: rsi1111
+  
+- description: Name of the MYSQL database accessed.
+  displayName: MYSQL Database Name
+  name: MYSQL_DATABASE
+  required: true
+  value: drupal
