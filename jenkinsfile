@@ -1,5 +1,7 @@
-def templatePath = 'https://raw.githack.com/MuhammadYasser2019/nodejs-ex/master/template-nodejs.json' 
-def templateName = 'nodejs-mongodb-example'
+// def templatePath = 'https://raw.githack.com/MuhammadYasser2019/nodejs-ex/master/template-nodejs.json' 
+def templatePath = 'https://raw.githack.com/MuhammadYasser2019/nodejs-ex/master/drupal.yaml'
+// def templateName = 'nodejs-mongodb-example'
+def templateName = 'drupal'
 
 pipeline {
   agent {
