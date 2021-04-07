@@ -1,7 +1,7 @@
 apiVersion: template.openshift.io/v1
 kind: Template
 metadata: 
-  name: time-stack-template
+  name: drupal
   annotations:
     iconClass: icon-rails
     description: |-
@@ -25,7 +25,7 @@ objects:
 - kind: BuildConfig
   apiVersion: build.openshift.io/v1
   metadata:
-    name: time-stack-builder
+    name: drupal
   spec:
     output:
       to:
@@ -48,7 +48,7 @@ objects:
 - apiVersion: v1
   kind: PersistentVolumeClaim
   metadata:
-    name: drupal-pvc
+    name: drupal
     labels:
       app: drupal
   spec:
@@ -130,7 +130,7 @@ objects:
 - kind: Service
   apiVersion: v1
   metadata:
-    name: drupal-8-svc
+    name: drupal
     labels:
       app: drupal
   spec:
@@ -149,7 +149,7 @@ objects:
 - kind: Route
   apiVersion: route.openshift.io/v1
   metadata:
-    name: drupal-route
+    name: drupal
     labels:
       app: drupal
   spec:
