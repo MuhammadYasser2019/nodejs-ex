@@ -99,7 +99,7 @@ objects:
               - name: vol-drupal
                 mountPath: /opt/app-root/data
             image: >-
-              image-registry.openshift-image-registry.svc:5000/drupal-prod/drupal:latest
+              image-registry.openshift-image-registry.svc:5000/jenkins-test-0/drupal:latest
         containers:
           - name: drupal
             image: >-
@@ -351,3 +351,11 @@ parameters:
   name: MYSQL_DATABASE
   required: true
   value: drupal
+  
+- description: namespace
+  displayName: NAMESPACE
+  name: NAMESPACE
+  required: true
+  value: jenkins-test-0
+  
+
