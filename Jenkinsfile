@@ -1,29 +1,24 @@
-// def templatePath = 'https://raw.githack.com/MuhammadYasser2019/nodejs-ex/master/template-nodejs.json' 
-def templatePath = 'https://raw.githack.com/MuhammadYasser2019/nodejs-ex/master/drupal.yaml'
-// def templateName = 'nodejs-mongodb-example'
-def templateName = 'drupal'
-
 pipeline {
   agent {
     node {
-      label 'nodejs' 
+      label 'nodejs'
     }
-  }
-  options {
-    timeout(time: 20, unit: 'MINUTES') 
+
   }
   stages {
     stage('preamble') {
-        steps {
-            script {
-                openshift.withCluster() {
-                    openshift.withProject() {
-                        echo "Using project: ${openshift.project()}"
-                    }
-                }
+      steps {
+        script {
+          openshift.withCluster() {
+            openshift.withProject() {
+              echo "Using project: ${openshift.project()}"
             }
+          }
         }
+
+      }
     }
+
     stage('CheckOut') {
       steps {
         sh '''#!/bin/bash
@@ -31,109 +26,46 @@ pipeline {
             '''
       }
     }
-    // stage('cleanup') {
-    //   steps {
-    //     script {
-    //         openshift.withCluster() {
-    //             openshift.withProject() {
-    //               openshift.selector("all", [ template : templateName ]).delete() 
-    //               if (openshift.selector("secrets", templateName).exists()) { 
-    //                 openshift.selector("secrets", templateName).delete()
-    //               }
-    //             }
-    //         }
-    //     }
-    //   }
-    // }
-    // stage('create') {
-    //   steps {
-    //     script {
-    //         openshift.withCluster() {
-    //             openshift.withProject() {
-    //               openshift.newApp(templatePath) 
-    //             }
-    //         }
-    //     }
-    //   }
-    // }
+
     stage('build') {
       steps {
         script {
-            openshift.withCluster() {
-                openshift.withProject() {
-                  def builds = openshift.selector("bc", "drupal").startBuild()
-                  timeout(5) { 
-                    builds.untilEach(1) {
-                      return (it.object().status.phase == "Complete")
-                    }
-                  }
+          openshift.withCluster() {
+            openshift.withProject() {
+              def builds = openshift.selector("bc", "drupal").startBuild()
+              timeout(5) {
+                builds.untilEach(1) {
+                  return (it.object().status.phase == "Complete")
                 }
+              }
             }
+          }
         }
+
       }
     }
+
     stage('deploy') {
       steps {
         script {
-            openshift.withCluster() {
-                openshift.withProject() {
-                  // openshift.selector("dc", "${templateName}").rollout().latest()
-                  def rm = openshift.selector("dc", "drupal").rollout().latest()
-                  timeout(5) { 
-                    openshift.selector("dc", templateName).related('pods').untilEach(1) {
-                      return (it.object().status.phase == "Running")
-                    }
-                  }
+          openshift.withCluster() {
+            openshift.withProject() {
+              // openshift.selector("dc", "${templateName}").rollout().latest()
+              def rm = openshift.selector("dc", "drupal").rollout().latest()
+              timeout(5) {
+                openshift.selector("dc", templateName).related('pods').untilEach(1) {
+                  return (it.object().status.phase == "Running")
                 }
+              }
             }
+          }
         }
+
       }
     }
-    // stage('build') {
-    //   steps {
-    //     script {
-    //         openshift.withCluster() {
-    //             openshift.withProject() {
-    //               def builds = openshift.selector("bc", templateName).related('builds')
-    //               timeout(5) { 
-    //                 builds.untilEach(1) {
-    //                   return (it.object().status.phase == "Complete")
-    //                 }
-    //               }
-    //             }
-    //         }
-    //     }
-    //   }
-    // }
-    // stage('deploy') {
-    //   steps {
-    //     script {
-    //         openshift.withCluster() {
-    //             openshift.withProject() {
-    //               def rm = openshift.selector("dc", templateName).rollout()
-    //               timeout(5) { 
-    //                 openshift.selector("dc", templateName).related('pods').untilEach(1) {
-    //                   return (it.object().status.phase == "Running")
-    //                 }
-    //               }
-    //             }
-    //         }
-    //     }
-    //   }
-    // }
-    // stage('tag') {
-    //   steps {
-    //     script {
-    //         openshift.withCluster() {
-    //             openshift.withProject() {
-    //               openshift.tag("${templateName}:latest", "${templateName}-staging:latest") 
-    //             }
-    //         }
-    //     }
-    //   }
-    // }
+
+  }
+  options {
+    timeout(time: 20, unit: 'MINUTES')
   }
 }
-
-
-
