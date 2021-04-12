@@ -1,4 +1,3 @@
-  
 pipeline {
   agent {
     node {
@@ -43,7 +42,7 @@ pipeline {
         }
       }
     }
-      stage('CheckOut') {
+    stage('CheckOut') {
       steps {
         sh '''#!/bin/bash
             oc apply -f DC/
