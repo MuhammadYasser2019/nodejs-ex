@@ -49,7 +49,7 @@ pipeline {
                 openshift.withProject() {
                   def rm = openshift.selector("dc", "drupal").rollout().latest()
                   timeout(20) { 
-                    openshift.selector("dc", templateName).related('pods').untilEach(1) {
+                    openshift.selector("dc", drupal).related('pods').untilEach(1) {
                       return (it.object().status.phase == "Running")
                     }
                   }
