@@ -77,7 +77,6 @@ pipeline {
         script {
             openshift.withCluster() {
                 openshift.withProject() {
-                  // openshift.selector("dc", "${templateName}").rollout().latest()
                   def rm = openshift.selector("dc", "drupal").rollout().latest()
                   timeout(5) { 
                     openshift.selector("dc", templateName).related('pods').untilEach(1) {
