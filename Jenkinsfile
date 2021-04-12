@@ -55,11 +55,6 @@ pipeline {
             openshift.withCluster() {
                 openshift.withProject() {
                   def rm = openshift.selector("dc", "drupal").rollout().latest()
-                  timeout(5) { 
-                    openshift.selector("dc", "drupal").related('pods').untilEach(1) {
-                      return (it.object().status.phase == "Running")
-                    }
-                  }
                 }
             }
         }
