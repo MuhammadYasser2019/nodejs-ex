@@ -5,7 +5,7 @@ pipeline {
     }
   }
   options {
-    timeout(time: 20, unit: 'MINUTES') 
+    timeout(time: 22, unit: 'MINUTES') 
   }
   stages {
     stage('preamble') {
