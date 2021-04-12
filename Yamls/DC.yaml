@@ -8,15 +8,6 @@ metadata:
 spec:
   strategy:
     type: Rolling
-  triggers:
-    - type: ImageChange
-      imageChangeParams:
-        automatic: true
-        containerNames:
-          - drupal
-        from:
-          kind: ImageStreamTag
-          name: 'drupal:latest' 
   replicas: 1
   template:
     metadata:

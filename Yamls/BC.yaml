@@ -16,5 +16,5 @@ spec:
     git:
       uri: 'https://github.com/MuhammadYasser2019/drupal-1.git'
       ref: 9.2.x
-  triggers:
-    - type: ConfigChange
+  # triggers:
+  #   - type: ConfigChange

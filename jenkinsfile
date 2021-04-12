@@ -24,48 +24,33 @@ pipeline {
             }
         }
     }
-    stage('cleanup') {
+    stage('CheckOut') {
       steps {
-        script {
-            openshift.withCluster() {
-                openshift.withProject() {
-                  openshift.selector("all", [ template : templateName ]).delete() 
-                  if (openshift.selector("secrets", templateName).exists()) { 
-                    openshift.selector("secrets", templateName).delete()
-                  }
-                }
-            }
-        }
+        sh '''#!/bin/bash
+            oc apply -f Yamls/
+            '''
       }
     }
-    stage('create') {
-      steps {
-        script {
-            openshift.withCluster() {
-                openshift.withProject() {
-                  openshift.newApp(templatePath) 
-                }
-            }
-        }
-      }
-    }
-    // stage('create') {
+    // stage('cleanup') {
     //   steps {
     //     script {
     //         openshift.withCluster() {
     //             openshift.withProject() {
-    //               openshift.selector("bc", "${templateName}").startBuild()
+    //               openshift.selector("all", [ template : templateName ]).delete() 
+    //               if (openshift.selector("secrets", templateName).exists()) { 
+    //                 openshift.selector("secrets", templateName).delete()
+    //               }
     //             }
     //         }
     //     }
     //   }
     // }
-    // stage('rollout') {
+    // stage('create') {
     //   steps {
     //     script {
     //         openshift.withCluster() {
     //             openshift.withProject() {
-    //               openshift.selector("dc", "${templateName}").rollout().latest()
+    //               openshift.newApp(templatePath) 
     //             }
     //         }
     //     }
@@ -76,7 +61,7 @@ pipeline {
         script {
             openshift.withCluster() {
                 openshift.withProject() {
-                  def builds = openshift.selector("bc", templateName).related('builds')
+                  def builds = openshift.selector("bc", "drupal").startBuild()
                   timeout(5) { 
                     builds.untilEach(1) {
                       return (it.object().status.phase == "Complete")
@@ -92,7 +77,8 @@ pipeline {
         script {
             openshift.withCluster() {
                 openshift.withProject() {
-                  def rm = openshift.selector("dc", templateName).rollout()
+                  // openshift.selector("dc", "${templateName}").rollout().latest()
+                  def rm = openshift.selector("dc", "drupal").rollout().latest()
                   timeout(5) { 
                     openshift.selector("dc", templateName).related('pods').untilEach(1) {
                       return (it.object().status.phase == "Running")
@@ -103,16 +89,51 @@ pipeline {
         }
       }
     }
-    stage('tag') {
-      steps {
-        script {
-            openshift.withCluster() {
-                openshift.withProject() {
-                  openshift.tag("${templateName}:latest", "${templateName}-staging:latest") 
-                }
-            }
-        }
-      }
-    }
+    // stage('build') {
+    //   steps {
+    //     script {
+    //         openshift.withCluster() {
+    //             openshift.withProject() {
+    //               def builds = openshift.selector("bc", templateName).related('builds')
+    //               timeout(5) { 
+    //                 builds.untilEach(1) {
+    //                   return (it.object().status.phase == "Complete")
+    //                 }
+    //               }
+    //             }
+    //         }
+    //     }
+    //   }
+    // }
+    // stage('deploy') {
+    //   steps {
+    //     script {
+    //         openshift.withCluster() {
+    //             openshift.withProject() {
+    //               def rm = openshift.selector("dc", templateName).rollout()
+    //               timeout(5) { 
+    //                 openshift.selector("dc", templateName).related('pods').untilEach(1) {
+    //                   return (it.object().status.phase == "Running")
+    //                 }
+    //               }
+    //             }
+    //         }
+    //     }
+    //   }
+    // }
+    // stage('tag') {
+    //   steps {
+    //     script {
+    //         openshift.withCluster() {
+    //             openshift.withProject() {
+    //               openshift.tag("${templateName}:latest", "${templateName}-staging:latest") 
+    //             }
+    //         }
+    //     }
+    //   }
+    // }
   }
 }
+
+
+
