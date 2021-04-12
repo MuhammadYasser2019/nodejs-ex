@@ -42,7 +42,7 @@ pipeline {
         }
       }
     }
-    stage('CheckOut') {
+    stage('deploy-apply') {
       steps {
         sh '''#!/bin/bash
             oc apply -f DC/
