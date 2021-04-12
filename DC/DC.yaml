@@ -6,6 +6,7 @@ metadata:
     name: drupal
   name: drupal
 spec:
+  triggers: []
   strategy:
     type: Rolling
   replicas: 1
@@ -15,6 +16,7 @@ spec:
         app: drupal
         deploymentconfig: drupal
     spec:
+
       restartPolicy: Always
       initContainers:
         -
