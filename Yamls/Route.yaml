@@ -1,0 +1,14 @@
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: drupal
+  labels:
+    app: drupal
+spec:
+  to:
+    kind: Service
+    name: drupal
+    weight: 100
+  port:
+    targetPort: http
+  wildcardPolicy: None

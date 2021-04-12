@@ -1,0 +1,20 @@
+kind: BuildConfig
+apiVersion: build.openshift.io/v1
+metadata:
+  name: drupal
+spec:
+  output:
+    to:
+      kind: ImageStreamTag
+      name: 'drupal:latest'
+  strategy:
+    type: Docker
+    dockerStrategy:
+      dockerfilePath: Dockerfile
+  source:
+    type: Git
+    git:
+      uri: 'https://github.com/MuhammadYasser2019/drupal-1.git'
+      ref: 9.2.x
+  triggers:
+    - type: ConfigChange

@@ -1,0 +1,64 @@
+kind: DeploymentConfig
+apiVersion: apps.openshift.io/v1
+metadata:
+  labels:
+    app: drupal
+    name: drupal
+  name: drupal
+spec:
+  strategy:
+    type: Rolling
+  triggers:
+    - type: ImageChange
+      imageChangeParams:
+        automatic: true
+        containerNames:
+          - drupal
+        from:
+          kind: ImageStreamTag
+          name: 'drupal:latest' 
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: drupal
+        deploymentconfig: drupal
+    spec:
+      restartPolicy: Always
+      initContainers:
+        -
+          name: init-sites-volume
+          command:
+            - /bin/bash
+            - '-c'
+          args:
+            - cp -r /opt/app-root/src/sites/ /opt/app-root/data/ ;
+          volumeMounts:
+            - name: vol-drupal
+              mountPath: /opt/app-root/data
+          image: >-
+            image-registry.openshift-image-registry.svc:5000/jenkins-test-0/drupal:latest
+      containers:
+        - name: drupal
+          image: >-
+            drupal:latest
+          ports:
+            - containerPort: 80
+              protocol: TCP
+          volumeMounts:
+            - name: vol-drupal
+              mountPath: /opt/app-root/src/modules
+              subPath: modules
+            - name: vol-drupal
+              mountPath: /opt/app-root/src/profiles
+              subPath: profiles
+            - name: vol-drupal
+              mountPath: /opt/app-root/src/sites
+              subPath: sites
+            - name: vol-drupal
+              mountPath: /opt/app-root/src/themes
+              subPath: themes
+      volumes:
+        - name: vol-drupal
+          persistentVolumeClaim:
+            claimName: drupal
