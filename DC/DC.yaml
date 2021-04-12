@@ -32,7 +32,7 @@ spec:
       containers:
         - name: drupal
           image: >-
-            drupal:latest
+            image-registry.openshift-image-registry.svc:5000/jenkins-test-0/drupal:latest
           ports:
             - containerPort: 80
               protocol: TCP
