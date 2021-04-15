@@ -42,7 +42,7 @@ pipeline {
         }
       }
     }
-      stage('CheckOut') {
+    stage('deploy-apply') {
       steps {
         sh '''#!/bin/bash
             oc apply -f DC/
@@ -59,14 +59,11 @@ pipeline {
                     openshift.selector("dc", "drupal").related('pods').untilEach(1) {
                       return (it.object().status.phase == "Running")
                     }
-                  }
-                }
+                  }                }
             }
         }
       }
     }
   }
 }
-
-
-
+//  test 
